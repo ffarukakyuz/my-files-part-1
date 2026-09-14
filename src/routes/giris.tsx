@@ -78,7 +78,11 @@ function AuthPage() {
 
     if (error) {
       setBusy(false);
-      toast.error("Google ile giriş yapılamadı: " + error.message);
+      toast.error(
+        /provider|secret|not enabled/i.test(error.message)
+          ? "Google ile giriş şu anda etkin değil. Lütfen telefon numaranızla giriş yapın."
+          : "Google ile giriş yapılamadı: " + error.message,
+      );
     }
   };
 
