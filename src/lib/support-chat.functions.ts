@@ -70,22 +70,20 @@ ${SITE_INFO}
 Depodaki güncel ürünler:
 ${productList || "(ürün listesi şu an alınamadı)"}`;
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            { role: "user", parts: [{ text: system }] },
-            ...data.messages.map((m) => ({
-              role: m.role === "assistant" ? "model" : "user",
-              parts: [{ text: m.content }],
-            })),
-          ],
-        }),
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Lovable-API-Key": apiKey,
       },
-    );
+      body: JSON.stringify({
+        model: "google/gemini-3.8-flash",
+        messages: [
+          { role: "system", content: system },
+          ...data.messages.map((m) => ({ role: m.role, content: m.content })),
+        ],
+      }),
+    });
 
     if (res.status === 429) {
       return {
@@ -93,13 +91,20 @@ ${productList || "(ürün listesi şu an alınamadı)"}`;
         reply: "Çok fazla istek geldi, lütfen biraz sonra tekrar deneyin.",
       };
     }
+    if (res.status === 402 || res.status === 403) {
+      return {
+        ok: false as const,
+        reply: "Asistan geçici olarak kapalı. Lütfen firma ile iletişime geçin.",
+      };
+    }
     if (!res.ok) {
+      console.error("[askSupport] gateway error", res.status, await res.text());
       return { ok: false as const, reply: "Şu an cevap veremiyorum, lütfen tekrar deneyin." };
     }
 
     const json = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      choices?: Array<{ message?: { content?: string } }>;
     };
-    const reply = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    const reply = json.choices?.[0]?.message?.content?.trim();
     return { ok: true as const, reply: reply || "Bunu tam anlayamadım, tekrar sorar mısınız?" };
   });
