@@ -29,7 +29,7 @@ Kurallar:
 export const askSupport = createServerFn({ method: "POST" })
   .inputValidator((data) => inputSchema.parse(data))
   .handler(async ({ data }) => {
-    const apiKey = process.env["GEMINI_API_KEY"];
+    const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) {
       return { ok: false as const, reply: "Asistan şu anda kullanılamıyor." };
     }
